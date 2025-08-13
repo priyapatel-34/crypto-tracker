@@ -15,8 +15,6 @@ export interface FilterOptions {
   rankMax?: number;
   marketCapMin?: number;
   marketCapMax?: number;
-  changeMin?: number;
-  changeMax?: number;
   sortBy: 'rank' | 'price' | 'market_cap' | 'change_24h' | 'volume';
   sortOrder: 'asc' | 'desc';
 }
@@ -69,7 +67,7 @@ export function FilterPanel({ filters, onFiltersChange, activeFilterCount }: Fil
         
         <CollapsibleContent className="px-4 pb-4">
           <div className="space-y-6">
-            Sorting
+            {/* Sorting */}
             <div className="space-y-3">
               <Label className="text-sm font-medium text-foreground">Sort By</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -182,34 +180,7 @@ export function FilterPanel({ filters, onFiltersChange, activeFilterCount }: Fil
                   />
                 </div>
               </div>
-            </div> 
-
-            {/* 24h Change Range */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-foreground">24h Change (%)</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Min Change</Label>
-                  <Input
-                    type="number"
-                    placeholder="-100"
-                    value={filters.changeMin || ''}
-                    onChange={(e: { target: { value: string; }; }) => updateFilter('changeMin', parseFloat(e.target.value))}
-                    className="bg-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Max Change</Label>
-                  <Input
-                    type="number"
-                    placeholder="100"
-                    value={filters.changeMax || ''}
-                    onChange={(e: { target: { value: string; }; }) => updateFilter('changeMax', parseFloat(e.target.value))}
-                    className="bg-input"
-                  />
-                </div>
-              </div>
-            </div> 
+            </div>  
 
             {/* Clear Filters */}
             {hasActiveFilters && (
