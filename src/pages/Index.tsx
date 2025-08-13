@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, Star, RefreshCw } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
-import { coinGeckoAPI, CryptoCoin } from "../lib/api";
+import { coinGeckoAPI, type CryptoCoin } from "../lib/api";
 import { FilterOptions, FilterPanel } from "../components/crpto/FilterPanel";
 import { WatchlistManager } from "../lib/watchlist";
 import { Button } from "../components/ui/Button";
@@ -18,17 +18,45 @@ import { CryptoCard } from "../components/crpto/CryptoCard";
 import { WatchlistPanel } from "../components/crpto/WatchlisPanel";
 import { CryptoModal } from "../components/crpto/CryptoModal";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { FullPageLoader } from "../components/ui/FullPageLoader";
 
 const Index = () => {
   const [selectedCoin, setSelectedCoin] = useState<CryptoCoin | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [watchlistCoins, setWatchlistCoins] = useState<CryptoCoin[]>([]);
   const [activeTab, setActiveTab] = useState("market");
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const { toast } = useToast();
+
+  const handleCoinClick = useCallback((coin: CryptoCoin) => {
+    setSelectedCoin(coin);
+    setIsModalOpen(true);
+  }, []);
+  
   const [filters, setFilters] = useState<FilterOptions>({
     sortBy: "rank",
     sortOrder: "asc",
   });
-  const { toast } = useToast();
+ 
+
+  const debouncedSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      setIsSearching(!!query);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (isSearching) {
+      const timer = setTimeout(() => {
+        setIsSearching(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearching]);
 
   const {
     data: topCoins,
@@ -45,8 +73,18 @@ const Index = () => {
   const filteredAndSortedCoins = useMemo(() => {
     if (!topCoins) return [];
 
-    let filtered = topCoins.filter(
-      (coin: {
+    let filtered = topCoins;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (coin) =>
+          coin.name.toLowerCase().includes(query) ||
+          coin.symbol.toLowerCase().includes(query)
+      );
+    }
+
+    filtered = filtered.filter((coin: {
         current_price: number;
         market_cap_rank: number;
         market_cap: number;
@@ -85,17 +123,6 @@ const Index = () => {
         )
           return false;
 
-        if (
-          filters.changeMin !== undefined &&
-          coin.price_change_percentage_24h < filters.changeMin
-        )
-          return false;
-        if (
-          filters.changeMax !== undefined &&
-          coin.price_change_percentage_24h > filters.changeMax
-        )
-          return false;
-
         return true;
       }
     );
@@ -105,14 +132,12 @@ const Index = () => {
         a: {
           current_price: number;
           market_cap: number;
-          price_change_percentage_24h: number;
           total_volume: number;
           market_cap_rank: number;
         },
         b: {
           current_price: number;
           market_cap: number;
-          price_change_percentage_24h: number;
           total_volume: number;
           market_cap_rank: number;
         }
@@ -127,10 +152,6 @@ const Index = () => {
           case "market_cap":
             aValue = a.market_cap;
             bValue = b.market_cap;
-            break;
-          case "change_24h":
-            aValue = a.price_change_percentage_24h;
-            bValue = b.price_change_percentage_24h;
             break;
           case "volume":
             aValue = a.total_volume;
@@ -156,8 +177,6 @@ const Index = () => {
     if (filters.rankMax !== undefined) count++;
     if (filters.marketCapMin !== undefined) count++;
     if (filters.marketCapMax !== undefined) count++;
-    if (filters.changeMin !== undefined) count++;
-    if (filters.changeMax !== undefined) count++;
     if (filters.sortBy !== "rank" || filters.sortOrder !== "asc") count++;
     return count;
   }, [filters]);
@@ -176,10 +195,12 @@ const Index = () => {
     setWatchlistCoins(watchlist);
   };
 
-  const handleCoinClick = (coin: CryptoCoin) => {
-    setSelectedCoin(coin);
-    setIsModalOpen(true);
-  };
+
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedCoin(null);
+    setIsModalOpen(false);
+  }, []);
 
   const handleWatchlistChange = () => {
     loadWatchlistCoins();
@@ -201,6 +222,13 @@ const Index = () => {
     });
   };
 
+  const handleFilterChange = async (newFilters: FilterOptions) => {
+    setIsFiltering(true);
+    setFilters(newFilters);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsFiltering(false);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -220,6 +248,20 @@ const Index = () => {
           </Button>
         </Card>
       </div>
+    );
+  }
+
+  const showLoader = isLoading || isFiltering;
+
+  if (showLoader) {
+    return (
+      <FullPageLoader
+        text={
+          isLoading ? "Loading market data..." : 
+          isFiltering ? "Applying filters..." : 
+          "Searching..."
+        }
+      />
     );
   }
 
@@ -317,7 +359,7 @@ const Index = () => {
               </p>
             </div>
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <Card
                     key={i}
@@ -345,15 +387,15 @@ const Index = () => {
                   No cryptocurrencies match your current filters.
                 </p>
                 <Button
-                  // variant="outline"
-                  // onClick={() => setFilters({ sortBy: 'rank', sortOrder: 'asc' })}
+                  variant="outline"
+                  onClick={() => setFilters({ sortBy: 'rank', sortOrder: 'asc' })}
                   className="mt-4"
                 >
                   Clear Filters
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6">
                 {filteredAndSortedCoins.map((coin: CryptoCoin) => (
                   <CryptoCard
                     key={coin.id}
@@ -376,12 +418,14 @@ const Index = () => {
         </Tabs>
       </main>
 
-      <CryptoModal
-        coin={selectedCoin}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onWatchlistChange={handleWatchlistChange}
-      />
+      {selectedCoin && (
+        <CryptoModal
+          coin={selectedCoin} 
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal}
+          onWatchlistChange={handleWatchlistChange}
+        />
+      )}
     </div>
   );
 };
