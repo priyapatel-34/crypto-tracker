@@ -114,7 +114,7 @@ export function SearchBar({ onSelectCoin, onSearch, className }: SearchBarProps)
               <p className="text-sm text-muted-foreground mt-2">Searching...</p>
             </div>
           ) : results.length > 0 ? (
-            <div className="divide-y divide-border/30">
+            <div className="divide-y divide-border/30 bg-white dark:bg-gray-900">
               {results.map((coin) => (
                 <button
                   key={coin.id}

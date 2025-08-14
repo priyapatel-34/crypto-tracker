@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Star, LogOut } from "lucide-react";
+import { TrendingUp, Star, LogOut, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { coinGeckoAPI, type CryptoCoin } from "../lib/api";
 import { FilterOptions, FilterPanel } from "../components/crpto/FilterPanel";
@@ -8,7 +8,7 @@ import { WatchlistManager } from "../lib/watchlist";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { SearchBar } from "../components/crpto/SearchBar";
-import toast from "react-hot-toast";
+import ToastMessage from "../components/crpto/ToastMessage";
 import {
   Tabs,
   TabsContent,
@@ -75,15 +75,6 @@ const Index = () => {
 
     let filtered = topCoins;
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (coin) =>
-          coin.name.toLowerCase().includes(query) ||
-          coin.symbol.toLowerCase().includes(query)
-      );
-    }
-
     filtered = filtered.filter(
       (coin: {
         current_price: number;
@@ -148,7 +139,7 @@ const Index = () => {
     );
 
     return filtered.slice(0, 30);
-  }, [topCoins, filters, searchQuery]);
+  }, [topCoins, filters]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -176,7 +167,7 @@ const Index = () => {
 
   const handleLogout = () => {
     logout();
-    toast.success("Logged out successfully!");
+    showToast("Logged out successfully!", "success");
     navigate("/login");
   };
 
@@ -185,9 +176,29 @@ const Index = () => {
     setIsModalOpen(false);
   }, []);
 
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+    id: string;
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+    id: ""
+  });
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    const id = Date.now().toString();
+    setToast({ show: true, message, type, id });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
   const handleWatchlistChange = () => {
     loadWatchlistCoins();
-    toast("Watchlist Updated");
+    showToast("Watchlist updated");
   };
 
   const handleRemoveFromWatchlist = (coinId: string) => {
@@ -209,7 +220,7 @@ const Index = () => {
       if (newFilters.sortOrder)
         filterDescription.push(`in ${newFilters.sortOrder} order`);
 
-      toast(`Filters applied: ${filterDescription.join(", ")}`);
+      showToast(`Filters applied: ${filterDescription.join(", ")}`);
 
       return () => clearTimeout(timer);
     },
@@ -252,6 +263,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {toast.show && (
+        <ToastMessage
+          message={toast.message}
+          type={toast.type}
+          toastId={toast.id}
+          visible={toast.show}
+          onClose={() => setToast(prev => ({ ...prev, show: false }))}
+        />
+      )}
       {/* Header */}
       <header className="border-b border-border/30 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -289,7 +309,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Mobile Search */}
           <div className="mt-4 md:hidden">
             <SearchBar onSelectCoin={handleCoinClick} onSearch={handleSearch} />
           </div>
@@ -326,7 +345,7 @@ const Index = () => {
                     : "hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Star className="w-4 h-4" />
+                  <Star className="w-4 h-4" />
                 <span className="hidden sm:inline">
                   Watchlist ({watchlistCoins.length})
                 </span>

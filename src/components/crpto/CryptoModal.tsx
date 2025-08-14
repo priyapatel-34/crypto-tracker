@@ -55,7 +55,7 @@ export function CryptoModal({
       tooltipBorder: "#3b82f6",
       tooltipText: "#f8fafc",
       positive: "#4ade80",
-      negative: "#f87171"
+      negative: "#f87171",
     },
     light: {
       text: "#1e293b",
@@ -68,12 +68,14 @@ export function CryptoModal({
       tooltipBorder: "#e2e8f0",
       tooltipText: "#1e293b",
       positive: "#10b981",
-      negative: "#ef4444"
+      negative: "#ef4444",
     },
   };
 
   const currentColors = chartColors[theme === "dark" ? "dark" : "light"];
-  const isPositive = coin?.price_change_percentage_24h ? coin.price_change_percentage_24h >= 0 : false;
+  const isPositive = coin?.price_change_percentage_24h
+    ? coin.price_change_percentage_24h >= 0
+    : false;
 
   useEffect(() => {
     if (coin) {
@@ -88,7 +90,6 @@ export function CryptoModal({
       const history = await coinGeckoAPI.getCoinHistory(coinId, days);
       setPriceHistory(history);
     } catch (error: any) {
-
       const samplePrices = Array.from({ length: 24 }, (_, i) => [
         Date.now() - (24 - i) * 3600000,
         Math.random() * 10000 + 50000,
@@ -115,42 +116,43 @@ export function CryptoModal({
     const newStatus = WatchlistManager.toggleWatchlist(coin.id);
     setIsInWatchlist(newStatus);
     onWatchlistChange?.();
-    toast.success(`${coin.name} has been ${
-      newStatus ? "added to" : "removed from"
-    } your watchlist`);
+    toast.success(
+      `${coin.name} has been ${
+        newStatus ? "added to" : "removed from"
+      } your watchlist`
+    );
   };
 
   if (!coin) return null;
 
   const chartData =
-  priceHistory?.prices.map((price) => {
-    const dateObj = new Date(price[0]);
-    let formattedDate;
+    priceHistory?.prices.map((price) => {
+      const dateObj = new Date(price[0]);
+      let formattedDate;
 
-    if (selectedPeriod === 1) {
-      formattedDate = dateObj.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } else if (selectedPeriod <= 7) {
-      formattedDate = dateObj.toLocaleDateString([], {
-        month: "short",
-        day: "numeric",
-      });
-    } else {
-      formattedDate = dateObj.toLocaleDateString([], {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
+      if (selectedPeriod === 1) {
+        formattedDate = dateObj.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } else if (selectedPeriod <= 7) {
+        formattedDate = dateObj.toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+        });
+      } else {
+        formattedDate = dateObj.toLocaleDateString([], {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+      }
 
-    return {
-      date: formattedDate,
-      price: price[1],
-    };
-  }) || [];
-
+      return {
+        date: formattedDate,
+        price: price[1],
+      };
+    }) || [];
 
   interface ChartDataPoint {
     date: string;
@@ -170,12 +172,12 @@ export function CryptoModal({
     if (!data) return null;
 
     return (
-      <div 
+      <div
         className="p-3 rounded-lg shadow-lg border"
         style={{
           backgroundColor: currentColors.tooltipBg,
           borderColor: currentColors.tooltipBorder,
-          color: currentColors.tooltipText
+          color: currentColors.tooltipText,
         }}
       >
         <p className="font-medium text-sm">{data.date}</p>
@@ -204,11 +206,11 @@ export function CryptoModal({
         className="sm:max-w-[700px] p-0 overflow-hidden"
         style={{
           backgroundColor: currentColors.background,
-          borderColor: currentColors.border
+          borderColor: currentColors.border,
         }}
         onInteractOutside={onClose}
       >
-        <DialogHeader 
+        <DialogHeader
           className="px-6 pt-6 pb-4 border-b"
           style={{ borderColor: currentColors.border }}
         >
@@ -220,65 +222,59 @@ export function CryptoModal({
                 className="w-10 h-10 rounded-full"
               />
               <div>
-                <DialogTitle className="text-2xl font-bold">
-                  {coin.name}{" "}
-                  <span className="text-muted-foreground">
-                    ({coin.symbol.toUpperCase()})
-                  </span>
-                </DialogTitle>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-semibold">
+                  <DialogTitle className="text-2xl font-bold">
+                    {coin.name}{" "}
+                    <span className="text-muted-foreground">
+                      ({coin.symbol.toUpperCase()})
+                    </span>
+                  </DialogTitle>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleWatchlistToggle}
+                    className={cn(
+                      "h-8 w-8 rounded-full",
+                      isInWatchlist
+                        ? "text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-500"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Star
+                      className={cn("h-5 w-5", isInWatchlist && "fill-current")}
+                    />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm font-semibold">
                     $
                     {coin.current_price.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 6,
                     })}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="text-sm flex items-center px-2 py-1 rounded"
-                      style={{
-                        backgroundColor: isPositive 
-                          ? `${currentColors.positive}20` 
-                          : `${currentColors.negative}20`,
-                        color: isPositive 
-                          ? currentColors.positive 
-                          : currentColors.negative
-                      }}
-                    >
-                      {isPositive ? (
-                        <TrendingUp className="h-3.5 w-3.5 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3.5 w-3.5 mr-1" />
-                      )}
-                      {Math.abs(
-                        coin.price_change_percentage_24h
-                      ).toFixed(2)}%
-                    </span>
-                  </div>
+                  <span
+                    className="text-sm flex items-center px-2 py-1 rounded"
+                    style={{
+                      backgroundColor: isPositive
+                        ? `${currentColors.positive}20`
+                        : `${currentColors.negative}20`,
+                      color: isPositive
+                        ? currentColors.positive
+                        : currentColors.negative,
+                    }}
+                  >
+                    {isPositive ? (
+                      <TrendingUp className="h-2.5 w-2.5 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-2.5 w-2.5 mr-1" />
+                    )}
+                    {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
+                  </span>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleWatchlistToggle}
-                className={cn(
-                  "h-9 w-9 rounded-full",
-                  isInWatchlist
-                    ? "text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-500"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Star
-                  className={cn(
-                    "h-5 w-5",
-                    isInWatchlist && "fill-current"
-                  )}
-                />
-                {isInWatchlist ? "Remove" : "Add"}
-              </Button>
             </div>
           </div>
         </DialogHeader>
@@ -289,11 +285,11 @@ export function CryptoModal({
             onValueChange={(value) => setSelectedPeriod(Number(value))}
             className="mb-6"
           >
-            <TabsList 
+            <TabsList
               className="grid w-full grid-cols-4 p-1 h-auto"
               style={{
                 backgroundColor: `${currentColors.cardBg}80`,
-                borderColor: currentColors.border
+                borderColor: currentColors.border,
               }}
             >
               <TabsTrigger value="1">24h</TabsTrigger>
@@ -376,31 +372,33 @@ export function CryptoModal({
           )}
 
           <div className="grid grid-cols-2 gap-4 mt-6">
-            <div 
+            <div
               className="p-4 rounded-lg border"
               style={{
                 backgroundColor: currentColors.cardBg,
-                borderColor: currentColors.border
+                borderColor: currentColors.border,
               }}
             >
               <div className="text-sm opacity-80 mb-1">Market Cap</div>
               <div className="font-semibold">
-                ${coin.market_cap.toLocaleString(undefined, {
-                  maximumFractionDigits: 0
+                $
+                {coin.market_cap.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
                 })}
               </div>
             </div>
-            <div 
+            <div
               className="p-4 rounded-lg border"
               style={{
                 backgroundColor: currentColors.cardBg,
-                borderColor: currentColors.border
+                borderColor: currentColors.border,
               }}
             >
               <div className="text-sm opacity-80 mb-1">24h Trading Volume</div>
               <div className="font-semibold">
-                ${coin.total_volume.toLocaleString(undefined, {
-                  maximumFractionDigits: 0
+                $
+                {coin.total_volume.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
                 })}
               </div>
             </div>

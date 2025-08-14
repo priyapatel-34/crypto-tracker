@@ -1,4 +1,3 @@
-
 import { Star, TrendingUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
 import { WatchlistManager } from "../../lib/watchlist";
@@ -13,7 +12,11 @@ interface CryptoCardProps {
   onWatchlistChange?: () => void;
 }
 
-export function CryptoCard({ coin, onClick, onWatchlistChange }: CryptoCardProps) {
+export function CryptoCard({
+  coin,
+  onClick,
+  onWatchlistChange,
+}: CryptoCardProps) {
   const [isInWatchlist, setIsInWatchlist] = useState(
     WatchlistManager.isInWatchlist(coin.id)
   );
@@ -60,14 +63,13 @@ export function CryptoCard({ coin, onClick, onWatchlistChange }: CryptoCardProps
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick();
         }
       }}
     >
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
@@ -97,9 +99,10 @@ export function CryptoCard({ coin, onClick, onWatchlistChange }: CryptoCardProps
           </Button>
         </div>
 
-        {/* Price & Change */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-2xl font-bold">{formatPrice(coin.current_price)}</span>
+          <span className="text-2xl font-bold">
+            {formatPrice(coin.current_price)}
+          </span>
           <div
             className={cn(
               "flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium",
@@ -117,11 +120,12 @@ export function CryptoCard({ coin, onClick, onWatchlistChange }: CryptoCardProps
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-700">
+        <div className="flex items-center justify-between gap-4 pt-3 border-t border-gray-700">
           <div>
             <p className="text-xs text-gray-400 mb-1">Market Cap</p>
-            <p className="text-sm font-medium">{formatMarketCap(coin.market_cap)}</p>
+            <p className="text-sm font-medium">
+              {formatMarketCap(coin.market_cap)}
+            </p>
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-1">Rank</p>

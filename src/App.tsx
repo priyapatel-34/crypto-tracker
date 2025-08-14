@@ -5,6 +5,7 @@ import Dashboard from "./pages/Index";
 import { Toaster } from "react-hot-toast";
 import { ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
+import NotFound from "./pages/NotFound";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -14,27 +15,28 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <ThemeProvider
-    attribute="class"
-    defaultTheme="dark"
-    enableSystem
-    disableTransitionOnChange={false}
-  >
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-      <Toaster position="top-right" />
-    </AuthProvider>
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange={false}
+    >
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<NotFound />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="top-right" />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

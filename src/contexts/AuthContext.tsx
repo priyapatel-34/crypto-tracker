@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const login = (email: string, password: string) => {
-    if (email === "User@example.com" && password === "password123") {
+    if (email === "user@example.com" && password === "password123") {
       localStorage.setItem("isAuthenticated", "true");
       setIsAuthenticated(true);
       return true;

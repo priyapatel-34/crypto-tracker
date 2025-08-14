@@ -112,7 +112,6 @@ export function FilterPanel({
             </div>
           </div>
 
-          {/* Price Range */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Min Price</Label>
@@ -141,7 +140,7 @@ export function FilterPanel({
           <div className="flex gap-3">
             <Button
               onClick={applyFilters}
-              className="bg-blue-500 dark:bg-blue-600 text-white flex-1  font-medium rounded-lg transition-colors "
+              className="bg-green-500 dark:bg-green-600 text-white flex-1  font-medium rounded-lg transition-colors "
             >
               Apply
             </Button>
@@ -149,7 +148,7 @@ export function FilterPanel({
               <Button
                 variant="outline"
                 onClick={clearAllFilters}
-                className="gap-2 flex-1"
+                className="bg-red-500 dark:bg-red-600 text-white flex-1  font-medium rounded-lg transition-colors "
               >
                 <X className="w-4 h-4" />
                 Clear
