@@ -1,5 +1,6 @@
-import { Star, TrendingUp, TrendingDown, X } from "lucide-react";
+import { Star, TrendingUp, TrendingDown } from "lucide-react";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   LineChart,
   Line,
@@ -10,7 +11,6 @@ import {
   CartesianGrid,
 } from "recharts";
 import { useTheme } from "next-themes";
-import { useToast } from "../../hooks/use-toast";
 import {
   coinGeckoAPI,
   type CoinPriceHistory,
@@ -41,7 +41,6 @@ export function CryptoModal({
   );
   const [selectedPeriod, setSelectedPeriod] = useState<number>(7);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const { theme } = useTheme();
 
   const chartColors = {
@@ -90,17 +89,6 @@ export function CryptoModal({
       setPriceHistory(history);
     } catch (error: any) {
 
-      const isAuthError =
-        error?.response?.status === 401 || error?.code === "ERR_BAD_REQUEST";
-
-      toast({
-        title: isAuthError ? "API Limit Reached" : "Error",
-        description: isAuthError
-          ? "Free API limit reached. Using sample data instead."
-          : "Failed to fetch price history. Using sample data.",
-        variant: "destructive",
-      });
-
       const samplePrices = Array.from({ length: 24 }, (_, i) => [
         Date.now() - (24 - i) * 3600000,
         Math.random() * 10000 + 50000,
@@ -127,12 +115,9 @@ export function CryptoModal({
     const newStatus = WatchlistManager.toggleWatchlist(coin.id);
     setIsInWatchlist(newStatus);
     onWatchlistChange?.();
-    toast({
-      title: newStatus ? "Added to Watchlist" : "Removed from Watchlist",
-      description: `${coin.name} has been ${
-        newStatus ? "added to" : "removed from"
-      } your watchlist`,
-    });
+    toast.success(`${coin.name} has been ${
+      newStatus ? "added to" : "removed from"
+    } your watchlist`);
   };
 
   if (!coin) return null;
