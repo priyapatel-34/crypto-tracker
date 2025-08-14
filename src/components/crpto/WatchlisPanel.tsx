@@ -12,23 +12,23 @@ interface WatchlistPanelProps {
   className?: string;
 }
 
-export function WatchlistPanel({ 
-  watchlistCoins, 
-  onCoinClick, 
+export function WatchlistPanel({
+  watchlistCoins,
+  onCoinClick,
   onRemoveFromWatchlist,
-  className 
+  className,
 }: WatchlistPanelProps) {
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: price < 1 ? 6 : 2,
       maximumFractionDigits: price < 1 ? 6 : 2,
     }).format(price);
   };
 
   const formatPercentage = (percentage: number) => {
-    return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
+    return `${percentage >= 0 ? "+" : ""}${percentage.toFixed(2)}%`;
   };
 
   const handleRemove = (e: React.MouseEvent, coinId: string) => {
@@ -65,21 +65,24 @@ export function WatchlistPanel({
       <div className="space-y-3">
         {watchlistCoins.map((coin) => {
           const isPositive = coin.price_change_percentage_24h >= 0;
-          
+
           return (
             <div
               key={coin.id}
               onClick={() => onCoinClick(coin)}
-              className="group flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-all duration-200 cursor-pointer border border-transparent hover:border-primary/20"
+              className={cn(
+                "group flex items-center justify-between p-3 rounded-lg border border-border/50",
+                "transition-transform duration-200 cursor-pointer hover:border-green-400/40 hover:ring-1 hover:ring-green-400/30 hover:bg-green-500/5"
+              )}
             >
               <div className="flex items-center gap-3">
-                <img 
-                  src={coin.image} 
+                <img
+                  src={coin.image}
                   alt={coin.name}
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
-                  <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">
+                  <p className="font-medium text-foreground text-sm transition-colors">
                     {coin.name}
                   </p>
                   <p className="text-xs text-muted-foreground uppercase">
@@ -93,19 +96,21 @@ export function WatchlistPanel({
                   <p className="font-medium text-foreground text-sm">
                     {formatPrice(coin.current_price)}
                   </p>
-                  <p className={cn(
-                    "text-xs",
-                    isPositive ? "text-crypto-green" : "text-crypto-red"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      isPositive ? "text-crypto-green" : "text-crypto-red"
+                    )}
+                  >
                     {formatPercentage(coin.price_change_percentage_24h)}
                   </p>
                 </div>
-                
+
                 <Button
-                  // variant="ghost"
-                  // size="sm"
-                  // onClick={(e:any) => handleRemove(e, coin.id)}
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-destructive"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e: any) => handleRemove(e, coin.id)}
+                  className="h-8 w-8 p-0 hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
