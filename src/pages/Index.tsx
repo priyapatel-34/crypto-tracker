@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Star, LogOut, X } from "lucide-react";
+import { TrendingUp, Star, LogOut } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { coinGeckoAPI, type CryptoCoin } from "../lib/api";
 import { FilterOptions, FilterPanel } from "../components/crpto/FilterPanel";
@@ -29,7 +29,6 @@ const Index = () => {
   const [watchlistCoins, setWatchlistCoins] = useState<CryptoCoin[]>([]);
   const [activeTab, setActiveTab] = useState("market");
   const [isFiltering, setIsFiltering] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -45,7 +44,6 @@ const Index = () => {
   });
 
   const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
     const isSearching = !!query;
     setIsSearching(isSearching);
   }, []);

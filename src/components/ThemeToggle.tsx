@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/Button";
 
 export function ThemeToggle() {
-  const { setTheme, theme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
