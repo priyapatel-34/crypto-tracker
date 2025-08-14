@@ -7,10 +7,11 @@ import { Input } from "../ui/Input";
 
 interface SearchBarProps {
   onSelectCoin: (coin: CryptoCoin) => void;
+  onSearch?: (query: string) => void;
   className?: string;
 }
 
-export function SearchBar({ onSelectCoin, className }: SearchBarProps) {
+export function SearchBar({ onSelectCoin, onSearch, className }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CryptoCoin[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +28,12 @@ export function SearchBar({ onSelectCoin, className }: SearchBarProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (onSearch) {
+      onSearch(query);
+    }
+  }, [query, onSearch]);
 
   useEffect(() => {
     const searchCoins = async () => {

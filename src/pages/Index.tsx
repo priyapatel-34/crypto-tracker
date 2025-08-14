@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Star, RefreshCw } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { TrendingUp, Star, LogOut } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import { coinGeckoAPI, type CryptoCoin } from "../lib/api";
 import { FilterOptions, FilterPanel } from "../components/crpto/FilterPanel";
 import { WatchlistManager } from "../lib/watchlist";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { SearchBar } from "../components/crpto/SearchBar";
+import toast from "react-hot-toast";
 import {
   Tabs,
   TabsContent,
@@ -19,6 +20,7 @@ import { WatchlistPanel } from "../components/crpto/WatchlisPanel";
 import { CryptoModal } from "../components/crpto/CryptoModal";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { FullPageLoader } from "../components/ui/FullPageLoader";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [selectedCoin, setSelectedCoin] = useState<CryptoCoin | null>(null);
@@ -28,7 +30,8 @@ const Index = () => {
   const [isFiltering, setIsFiltering] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const { toast } = useToast();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleCoinClick = useCallback((coin: CryptoCoin) => {
     setSelectedCoin(coin);
@@ -39,12 +42,12 @@ const Index = () => {
     sortBy: "rank",
     sortOrder: "asc",
   });
- 
 
-  const debouncedSearch = useCallback(
+  const handleSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
-      setIsSearching(!!query);
+      const isSearching = !!query;
+      setIsSearching(isSearching);
     },
     []
   );
@@ -65,7 +68,7 @@ const Index = () => {
     refetch,
   } = useQuery({
     queryKey: ["topCoins"],
-    queryFn: () => coinGeckoAPI.getTopCoins(100), 
+    queryFn: () => coinGeckoAPI.getTopCoins(100),
     refetchInterval: 60000,
     retry: 3,
   });
@@ -74,7 +77,7 @@ const Index = () => {
     if (!topCoins) return [];
 
     let filtered = topCoins;
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -85,48 +88,46 @@ const Index = () => {
     }
 
     filtered = filtered.filter((coin: {
-        current_price: number;
-        market_cap_rank: number;
-        market_cap: number;
-        price_change_percentage_24h: number;
-      }) => {
-        if (
-          filters.priceMin !== undefined &&
-          coin.current_price < filters.priceMin
-        )
-          return false;
-        if (
-          filters.priceMax !== undefined &&
-          coin.current_price > filters.priceMax
-        )
-          return false;
+      current_price: number;
+      market_cap_rank: number;
+      market_cap: number;
+      price_change_percentage_24h: number;
+    }) => {
+      if (
+        filters.priceMin !== undefined &&
+        coin.current_price < filters.priceMin
+      )
+        return false;
+      if (
+        filters.priceMax !== undefined &&
+        coin.current_price > filters.priceMax
+      )
+        return false;
 
-        if (
-          filters.rankMin !== undefined &&
-          coin.market_cap_rank < filters.rankMin
-        )
-          return false;
-        if (
-          filters.rankMax !== undefined &&
-          coin.market_cap_rank > filters.rankMax
-        )
-          return false;
+      if (
+        filters.rankMin !== undefined &&
+        coin.market_cap_rank < filters.rankMin
+      )
+        return false;
+      if (
+        filters.rankMax !== undefined &&
+        coin.market_cap_rank > filters.rankMax
+      )
+        return false;
 
-        if (
-          filters.marketCapMin !== undefined &&
-          coin.market_cap < filters.marketCapMin
-        )
-          return false;
-        if (
-          filters.marketCapMax !== undefined &&
-          coin.market_cap > filters.marketCapMax
-        )
-          return false;
+      if (
+        filters.marketCapMin !== undefined &&
+        coin.market_cap < filters.marketCapMin
+      )
+        return false;
+      if (
+        filters.marketCapMax !== undefined &&
+        coin.market_cap > filters.marketCapMax
+      )
+        return false;
 
-        return true;
-      }
-    );
-
+      return true;
+    });
     filtered.sort(
       (
         a: {
@@ -157,7 +158,7 @@ const Index = () => {
             aValue = a.total_volume;
             bValue = b.total_volume;
             break;
-          default: 
+          default:
             aValue = a.market_cap_rank;
             bValue = b.market_cap_rank;
         }
@@ -195,7 +196,11 @@ const Index = () => {
     setWatchlistCoins(watchlist);
   };
 
-
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully!");
+    navigate("/login");
+  };
 
   const handleCloseModal = useCallback(() => {
     setSelectedCoin(null);
@@ -204,30 +209,38 @@ const Index = () => {
 
   const handleWatchlistChange = () => {
     loadWatchlistCoins();
-    toast({
-      title: "Watchlist Updated",
-      description: "Your watchlist has been updated successfully",
-    });
+    toast("Watchlist Updated");
   };
 
   const handleRemoveFromWatchlist = (coinId: string) => {
     setWatchlistCoins((prev) => prev.filter((coin) => coin.id !== coinId));
   };
 
-  const handleRefresh = () => {
-    refetch();
-    toast({
-      title: "Refreshing Data",
-      description: "Cryptocurrency data is being updated",
+  const handleRefresh = useCallback(() => {
+    toast("Refreshing data");
+    refetch().then(() => {
+      toast("Data refreshed");
+    }).catch((error) => {
+      toast("Failed to refresh data. Please try again.");
     });
-  };
+  }, [refetch, toast]);
 
-  const handleFilterChange = async (newFilters: FilterOptions) => {
-    setIsFiltering(true);
+  const handleFilter = useCallback((newFilters: FilterOptions) => {
     setFilters(newFilters);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setIsFiltering(false);
-  };
+    setIsFiltering(true);
+    
+    const timer = setTimeout(() => {
+      setIsFiltering(false);
+    }, 5000);
+    
+    const filterDescription = [];
+    if (newFilters.sortBy) filterDescription.push(`sorted by ${newFilters.sortBy}`);
+    if (newFilters.sortOrder) filterDescription.push(`in ${newFilters.sortOrder} order`);
+
+    toast(`Filters applied: ${filterDescription.join(', ')}`);
+    
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   if (error) {
     return (
@@ -242,10 +255,6 @@ const Index = () => {
           <p className="text-muted-foreground mb-4">
             There was an error fetching cryptocurrency data. Please try again.
           </p>
-          <Button onClick={handleRefresh} className="w-full">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
-          </Button>
         </Card>
       </div>
     );
@@ -288,32 +297,25 @@ const Index = () => {
             <div className="flex items-center gap-2 sm:gap-4">
               <SearchBar
                 onSelectCoin={handleCoinClick}
+                onSearch={handleSearch}
                 className="w-64 lg:w-80 hidden md:block"
               />
               <ThemeToggle />
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
-                className="gap-2 hidden sm:flex"
+                onClick={handleLogout}
+                className="gap-2 hidden sm:flex hover:bg-destructive/10 hover:text-destructive"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden lg:inline">Refresh</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                className="sm:hidden p-2"
-              >
-                <RefreshCw className="w-4 h-4" />
+                <LogOut className="w-4 h-4" />
+                <span className="hidden lg:inline">Logout</span>
               </Button>
             </div>
           </div>
 
           {/* Mobile Search */}
           <div className="mt-4 md:hidden">
-            <SearchBar onSelectCoin={handleCoinClick} />
+            <SearchBar onSelectCoin={handleCoinClick} onSearch={handleSearch} />
           </div>
         </div>
       </header>
@@ -348,16 +350,10 @@ const Index = () => {
           <TabsContent value="market" className="space-y-4">
             <FilterPanel
               filters={filters}
-              onFiltersChange={setFilters}
+              onFiltersChange={handleFilter}
               activeFilterCount={activeFilterCount}
             />
 
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredAndSortedCoins.length} of{" "}
-                {topCoins?.length || 0} cryptocurrencies
-              </p>
-            </div>
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
